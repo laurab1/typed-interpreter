@@ -55,7 +55,7 @@ common warnings
 
 library
   hs-source-dirs:      src
-  exposed-modules:     UntypedExpr, Type, TypeChecker, TypedExpr
+  exposed-modules:     UntypedExpr, Type, TypeChecker, Value
   build-depends:       base ^>=4.18.3.0
 
 

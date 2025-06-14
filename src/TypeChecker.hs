@@ -1,21 +1,14 @@
-{-# LANGUAGE GADTs #-}
-
 module TypeChecker where
-import Data.Typeable
 import Type
-import TypedExpr
+import Value
 import UntypedExpr
 
 type TypeEnv = [(String, Type)]
 
-data TypedExprBox where
-    TypedExprBox :: Typeable a => TypedExpr a -> TypedExprBox
-
-
 typeCheck :: TypeEnv -> UntypedExpr -> Either String Type
 typeCheck env uexpr = case uexpr of
-    EInt i -> Right TInt
-    EBool b -> Right TBool
+    EInt _ -> Right TInt
+    EBool _ -> Right TBool
     EVar x -> let t = lookup x env
               in case t of
                     Nothing -> Left ("Unbound variable " ++ x)
@@ -64,5 +57,5 @@ typeCheck env uexpr = case uexpr of
     ELetRec f tfun par tpar funbody letbody -> do
         t <- typeCheck ((f,tfun):(par,tpar):env) funbody
         case tfun of
-            TFun targ tbody -> if t == tbody then typeCheck ((f,tfun):env) letbody else Left "Type mismatch on recursive function argument"
+            TFun targ tbody -> if t == tbody && targ == tpar then typeCheck ((f,tfun):env) letbody else Left "Type mismatch on recursive function argument"
             _ -> Left "Type mismatch: not a function"
