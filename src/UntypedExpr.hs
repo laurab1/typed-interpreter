@@ -1,4 +1,5 @@
 module UntypedExpr where
+import Type
 
 data UntypedExpr
   = EInt Int
@@ -10,7 +11,7 @@ data UntypedExpr
   | EIf UntypedExpr UntypedExpr UntypedExpr
   | EIsZero UntypedExpr
   | ELet String UntypedExpr UntypedExpr
-  | EFun String UntypedExpr
+  | EFun String Type UntypedExpr
   | EApp UntypedExpr UntypedExpr
-  | ELetRec String String UntypedExpr UntypedExpr
+  | ELetRec String Type String Type UntypedExpr UntypedExpr
   deriving (Eq, Show)

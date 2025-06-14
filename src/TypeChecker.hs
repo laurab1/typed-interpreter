@@ -49,5 +49,20 @@ typeCheck env uexpr = case uexpr of
         case tg of
             TBool -> if t1 == t2 then Right t1 else Left "Type mismatch between if cases"
             _ -> Left "Type mismatch on boolean guard"
-    EFun par body -> typeCheck env body
-    _ -> Left "TBD"
+    EFun par t body -> do
+        t1 <- typeCheck ((par,t):env) body
+        return (TFun t t1)
+    ELet ide expr body -> do
+        t1 <- typeCheck env expr
+        typeCheck ((ide, t1) : env) body
+    EApp f arg -> do
+        tfun <- typeCheck env f
+        targ <- typeCheck env arg
+        case tfun of
+            TFun t1 t2 -> if t1 == targ then Right t2 else Left "Type mismatch on function argument"
+            _ -> Left "Type mismatch: not a function"
+    ELetRec f tfun par tpar funbody letbody -> do
+        t <- typeCheck ((f,tfun):(par,tpar):env) funbody
+        case tfun of
+            TFun targ tbody -> if t == tbody then typeCheck ((f,tfun):env) letbody else Left "Type mismatch on recursive function argument"
+            _ -> Left "Type mismatch: not a function"
