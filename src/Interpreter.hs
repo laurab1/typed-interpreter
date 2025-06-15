@@ -30,6 +30,9 @@ eval env uexpr = case uexpr of
             b <- eval env m
             case (a,b) of
                 (VInt a1, VInt a2) -> return (VInt (a1 `div` a2))
+    EIf g e1 e2 -> do
+        tg <- eval env g
+        if tg == VBool True then eval env e1 else eval env e2
     ELet ide e1 e2 -> do
         val <- eval env e1
         eval ((ide, val):env) e2
