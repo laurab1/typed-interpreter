@@ -55,9 +55,10 @@ common warnings
 
 library
   hs-source-dirs:      src
-  exposed-modules:     UntypedExpr, Value, Type, TypeChecker, Interpreter
-  build-depends:       base ^>=4.18.3.0
-
+  exposed-modules:     UntypedExpr, Value, Type, TypeChecker, Interpreter, Parser
+  build-depends:       base ^>=4.18.3.0,
+                       megaparsec ^>=9.3.0,
+                       parser-combinators ^>=1.3.0
 
 executable typed-interpreter
     -- Import common warning flags.
@@ -73,14 +74,18 @@ executable typed-interpreter
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0, typed-interpreter
+    build-depends: base ^>=4.18.3.0,
+                   megaparsec ^>=9.3.0,
+                   text,
+                   typed-interpreter,
+                   parser-combinators ^>=1.3.0
 
     -- Directories containing source files.
     hs-source-dirs:   app, src
 
     -- Base language which the package is written in.
     default-language: Haskell2010
-    other-modules: UntypedExpr, Value, Type, TypeChecker, Interpreter
+    other-modules: UntypedExpr, Value, Type, TypeChecker, Interpreter, Parser
 
 test-suite my-interpreter-test
     type:                exitcode-stdio-1.0
