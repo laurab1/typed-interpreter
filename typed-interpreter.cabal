@@ -55,7 +55,7 @@ common warnings
 
 library
   hs-source-dirs:      src
-  exposed-modules:     UntypedExpr, Value, Type, TypeChecker
+  exposed-modules:     UntypedExpr, Value, Type, TypeChecker, Interpreter
   build-depends:       base ^>=4.18.3.0
 
 
@@ -73,13 +73,14 @@ executable typed-interpreter
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0
+    build-depends:    base ^>=4.18.3.0, typed-interpreter
 
     -- Directories containing source files.
     hs-source-dirs:   app, src
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+    other-modules: UntypedExpr, Value, Type, TypeChecker, Interpreter
 
 test-suite my-interpreter-test
     type:                exitcode-stdio-1.0

@@ -1,6 +1,5 @@
 module TypeChecker where
 import Type
-import Value
 import UntypedExpr
 
 type TypeEnv = [(String, Type)]

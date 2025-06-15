@@ -4,7 +4,7 @@ import UntypedExpr
 
 type Env a = [(String, a)]
 
-data Value = VInt Int | VBool Bool | VFun String UntypedExpr (Env UntypedExpr) | VFunRec String String UntypedExpr (Env UntypedExpr)
+data Value = VInt Int | VBool Bool | VFun String UntypedExpr (Env Value) | VFunRec String String UntypedExpr (Env Value)
 
 instance Eq Value where
     (==) :: Value -> Value -> Bool
