@@ -30,12 +30,11 @@ eval env uexpr = case uexpr of
             b <- eval env m
             case (a,b) of
                 (VInt a1, VInt a2) -> return (VInt (a1 `div` a2))
+    ELet ide e1 e2 -> eval ((ide, e1):env) e2
     _ -> Left "Stub"
 
 runProgram :: Env UntypedExpr -> UntypedExpr -> Either String Value
-runProgram env uexpr = case typeCheck [] uexpr of
-    Left msg -> Left msg
-    Right _ -> eval env uexpr
+runProgram env uexpr = typeCheck [] uexpr >> eval env uexpr
 
 main :: IO ()
 main = print (runProgram [] (EDiv (EInt 4) (EBool True)))
