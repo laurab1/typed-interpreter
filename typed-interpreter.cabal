@@ -58,7 +58,8 @@ library
   exposed-modules:     UntypedExpr, Value, Type, TypeChecker, Interpreter, Parser
   build-depends:       base ^>=4.18.3.0,
                        megaparsec ^>=9.3.0,
-                       parser-combinators ^>=1.3.0
+                       parser-combinators ^>=1.3.0,
+                       mtl
 
 executable typed-interpreter
     -- Import common warning flags.
@@ -78,7 +79,8 @@ executable typed-interpreter
                    megaparsec ^>=9.3.0,
                    text,
                    typed-interpreter,
-                   parser-combinators ^>=1.3.0
+                   parser-combinators ^>=1.3.0,
+                   mtl
 
     -- Directories containing source files.
     hs-source-dirs:   app, src
