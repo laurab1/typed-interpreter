@@ -2,6 +2,7 @@ module Interpreter where
 import TypeChecker
 import Value
 import UntypedExpr
+import Parser
 
 eval :: Env Value -> UntypedExpr -> Either String Value
 eval env uexpr = case uexpr of
@@ -49,5 +50,7 @@ eval env uexpr = case uexpr of
         in eval recEnv letBody
 
 
-runProgram :: Env Value -> UntypedExpr -> Either String Value
-runProgram env uexpr = typeCheck [] uexpr >> eval env uexpr
+runProgram :: Env Value -> String -> Either String Value
+runProgram env input = do
+    program <- runParser input
+    typeCheck [] program >> eval env program

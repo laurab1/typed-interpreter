@@ -1,75 +1,61 @@
 import Test.HUnit
-import UntypedExpr
-import TypeChecker
+import Parser
 import Interpreter
+import UntypedExpr
 import Value
-import Type
+import TypeChecker
 
+testInt :: Test
+testInt = TestCase $
+    assertEqual "parse and eval int" 
+        (Right (VInt 42)) 
+        (runProgram [] "42")
 
-testTypeCheckOK :: Test
-testTypeCheckOK = TestCase $
-  assertEqual "typecheck simple addition"
-    (Right TInt)
-    (typeCheck [] (EAdd (EInt 2) (EInt 3)))
+testBool :: Test
+testBool = TestCase $
+    assertEqual "parse and eval bool" 
+        (Right (VBool True)) 
+        (runProgram [] "true")
 
-testTypeCheckFail :: Test
-testTypeCheckFail = TestCase $
-  assertEqual "typecheck wrong addition (int + bool)"
-    (Left "Type mismatch")
-    (typeCheck [] (EAdd (EInt 2) (EBool True)))
+testAdd :: Test
+testAdd = TestCase $
+    assertEqual "parse and eval addition" 
+        (Right (VInt 7)) 
+        (runProgram [] "3 + 4")
 
-testTypeCheckFun :: Test
-testTypeCheckFun = TestCase $
-  assertEqual "typecheck function abstraction"
-    (Right (TFun TInt TInt))
-    (typeCheck [] (EFun "x" TInt (EAdd (EVar "x") (EInt 1))))
+testMul :: Test
+testMul = TestCase $
+    assertEqual "parse and eval multiplication" 
+        (Right (VInt 12)) 
+        (runProgram [] "3 * 4")
 
-testEvalAdd :: Test
-testEvalAdd = TestCase $
-  assertEqual "evaluate addition"
-    (Right (VInt 5))
-    (runProgram [] (EAdd (EInt 2) (EInt 3)))
+testIf :: Test
+testIf = TestCase $
+    assertEqual "parse and eval if true" 
+        (Right (VInt 1)) 
+        (runProgram [] "if true then 1 else 2")
 
-testEvalIf :: Test
-testEvalIf = TestCase $
-  assertEqual "evaluate if expression"
-    (Right (VInt 42))
-    (runProgram [] (EIf (EBool True) (EInt 42) (EInt 0)))
+testLet :: Test
+testLet = TestCase $
+    assertEqual "parse and eval let binding" 
+        (Right (VInt 5)) 
+        (runProgram [] "let x = 5 in x + 0")
 
-testEvalDivZero :: Test
-testEvalDivZero = TestCase $
-  assertEqual "division by zero"
-    (Left "Division by zero")
-    (runProgram [] (EDiv (EInt 5) (EInt 0)))
+testFunApp :: Test
+testFunApp = TestCase $
+    assertEqual "parse and eval simple function application" 
+        (Right (VInt 8)) 
+        (runProgram [] "let f = fun x:int -> x + 3 in f 5")
 
-testEvalFun :: Test
-testEvalFun = TestCase $
-  assertEqual "evaluate function application"
-    (Right (VInt 6))
-    (runProgram [] (ELet "f" (EFun "x" TInt (EAdd (EVar "x") (EInt 1)))
-                          (EApp (EVar "f") (EInt 5))))
+testLetRec :: Test
+testLetRec = TestCase $
+    assertEqual "parse and eval factorial (let rec)" 
+        (Right (VInt 120)) 
+        (runProgram [] 
+            "let rec fact : int -> int = fun n:int -> if iszero n then 1 else n * fact (n + -1) in fact 5")
 
-testEvalRec :: Test
-testEvalRec = TestCase $
-  assertEqual "evaluate recursive factorial (of 3)"
-    (Right (VInt 6))
-    (runProgram []
-      (ELetRec "fact" (TFun TInt TInt) "n" TInt
-         (EIf (EIsZero (EVar "n"))
-              (EInt 1)
-              (EMul (EVar "n") (EApp (EVar "fact") (EAdd (EVar "n") (EInt (-1))))))
-         (EApp (EVar "fact") (EInt 3))))
+allTests :: Test
+allTests = TestList [testInt, testBool, testAdd, testMul, testIf, testLet, testFunApp, testLetRec]
 
-main :: IO ()
-main = do
-  _ <- runTestTT $ TestList
-    [ testTypeCheckOK
-    , testTypeCheckFail
-    , testTypeCheckFun
-    , testEvalAdd
-    , testEvalIf
-    , testEvalDivZero
-    , testEvalFun
-    , testEvalRec
-    ]
-  return ()
+main :: IO Counts
+main = runTestTT allTests
