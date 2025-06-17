@@ -1,6 +1,6 @@
 module Main where
-import UntypedExpr
-import Interpreter
+import Parser
 
 main :: IO ()
-main = print "Hello haskell"
+main =
+    print (runParser "letrec fact : (int => int) n : int = if iszero n then 1 else n * fact (n - 1) in fact 5")

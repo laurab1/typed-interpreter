@@ -21,6 +21,11 @@ eval env uexpr = case uexpr of
         b <- eval env m
         case (a,b) of
             (VInt a1, VInt a2) -> return (VInt (a1 * a2))
+    ESub n m -> do
+        a <- eval env n
+        b <- eval env m
+        case (a,b) of
+            (VInt a1, VInt a2) -> return (VInt (a1 - a2))
     EIsZero m -> do
         m1 <- eval env m
         if m1 == VInt 0 then Right (VBool True) else Right (VBool False)

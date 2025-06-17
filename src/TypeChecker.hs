@@ -19,6 +19,12 @@ typeCheck env uexpr = case uexpr of
         case (t1, t2) of
             (TInt, TInt) -> return TInt
             _ -> Left "Type mismatch"
+    ESub n m -> do
+        t1 <- typeCheck env n
+        t2 <- typeCheck env m
+        case (t1, t2) of
+            (TInt, TInt) -> return TInt
+            _ -> Left "Type mismatch"
     EMul n m -> do
         t1 <- typeCheck env n
         t2 <- typeCheck env m
@@ -56,5 +62,5 @@ typeCheck env uexpr = case uexpr of
     ELetRec f tfun par tpar funbody letbody -> do
         t <- typeCheck ((f,tfun):(par,tpar):env) funbody
         case tfun of
-            TFun targ tbody -> if t == tbody && targ == tpar then typeCheck ((f,tfun):env) letbody else Left "Type mismatch on recursive function argument"
+            TFun targ tbody -> if t == tbody && targ == tpar then typeCheck ((f,tfun):(par,tpar):env) letbody else Left "Type mismatch on recursive function argument"
             _ -> Left "Type mismatch: not a function"

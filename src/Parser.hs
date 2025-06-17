@@ -1,142 +1,163 @@
 module Parser where
 
 import UntypedExpr
+import Type
 import Data.Void (Void)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Control.Monad.Combinators.Expr
-import Type
-import Data.Type.Coercion (sym)
 
 type Parser = Parsec Void String
 
+-- Space consumer
 sc :: Parser ()
 sc = L.space space1 empty empty
 
+-- Lexeme parser
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
 
+-- Symbol parser
 symbol :: String -> Parser String
 symbol = L.symbol sc
 
+-- Reserved keywords to avoid matching as variables
+reservedWords :: [String]
+reservedWords = ["if", "then", "else", "let", "in", "fun", "true", "false", "letrec", "iszero"]
+
+-- Integer parser
 integer :: Parser Int
 integer = lexeme L.decimal
 
+-- Boolean parser
 boolean :: Parser Bool
-boolean = (True <$ symbol "true")
-    <|> (False <$ symbol "false")
+boolean = (True <$ symbol "true") <|> (False <$ symbol "false")
 
+-- Identifier (variable) parser
+parseIde :: Parser String
+parseIde = lexeme $ try $ do
+    name <- (:) <$> letterChar <*> many alphaNumChar
+    if name `elem` reservedWords
+        then fail $ "reserved word " ++ show name
+        else return name
+
+-- Type parser
 typ :: Parser Type
-typ = makeExprParser typTerm typOperators
+typ = makeExprParser typTerm [[InfixR (TFun <$ symbol "=>")]]
 
 typTerm :: Parser Type
 typTerm = (TInt <$ symbol "int")
       <|> (TBool <$ symbol "bool")
       <|> parens typ
 
-typOperators :: [[Operator Parser Type]]
-typOperators =
-  [ [InfixR (TFun <$ symbol "->")] ]
-
+-- Integer expression
 parseInt :: Parser UntypedExpr
 parseInt = EInt <$> integer
 
+-- Bool expression
 parseBool :: Parser UntypedExpr
 parseBool = EBool <$> boolean
 
+-- Variable expression
 parseVar :: Parser UntypedExpr
-parseVar = do
-    first <- letterChar
-    rest <- many alphaNumChar
-    return (EVar (first:rest))
+parseVar = EVar <$> parseIde
 
+-- Parenthesized expressions
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
-keyword :: String -> Parser ()
-keyword w = lexeme (string w) >> return ()
-
-expr :: Parser UntypedExpr
-expr = makeExprParser termNoApp operatorTable
-
-operatorTable :: [[Operator Parser UntypedExpr]]
-operatorTable =
-  [ [ InfixL (EMul <$ symbol "*"), InfixL (EDiv <$ symbol "/") ]
-  , [ InfixL (EAdd <$ symbol "+") ]
-  ]
-
+-- IF expression
 parseIf :: Parser UntypedExpr
 parseIf = do
-  _ <- keyword "if"
+  _ <- symbol "if"
   cond <- expr
-  _ <- keyword "then"
+  _ <- symbol "then"
   thn <- expr
-  _ <- keyword "else"
+  _ <- symbol "else"
   els <- expr
   return (EIf cond thn els)
 
-parseIde :: Parser String
-parseIde = lexeme $ do
-    first <- letterChar
-    rest <- many alphaNumChar
-    return (first:rest)
-
+-- LET expression
 parseLet :: Parser UntypedExpr
 parseLet = do
-    keyword "let"
-    ide <- parseIde
-    symbol "="
-    e1 <- expr
-    keyword "in"
-    e2 <- expr
-    return (ELet ide e1 e2)
+  _ <- symbol "let"
+  name <- parseIde
+  _ <- symbol "="
+  val <- expr
+  _ <- symbol "in"
+  body <- expr
+  return (ELet name val body)
 
-
-parseFun :: Parser UntypedExpr
-parseFun = do
-    _ <- keyword "fun"
-    ide <- parseIde
+-- LET REC expression
+parseLetRec :: Parser UntypedExpr
+parseLetRec = do
+    _ <- symbol "letrec"
+    fname <- parseIde
     _ <- symbol ":"
     t <- typ
+    arg <- parseIde
+    _ <- symbol ":"
+    targ <- typ
+    _ <- symbol "="
+    fun <- expr
+    _ <- symbol "in"
+    body <- expr
+    return (ELetRec fname t arg targ fun body)  -- "_" e TInt dummy
+ -- "_" e TInt dummy, oppure ridefini ELetRec
+
+-- Function definition
+parseFun :: Parser UntypedExpr
+parseFun = do
+    _ <- symbol "fun"
+    ide <- parseIde
+    _ <- symbol ":"
+    t <- typTerm -- 👈 usa typTerm, non typ completo!
     _ <- symbol "->"
     e <- expr
     return (EFun ide t e)
 
+-- Atomic expressions (no operators or application)
+term :: Parser UntypedExpr
+term = choice
+  [ parseInt
+  , parseBool
+  , parseIsZero
+  , parseIf
+  , parseLetRec
+  , parseLet
+  , parseFun
+  , parseVar
+  , parens expr
+  ]
+
+-- Application parser (left-associative)
 parseApp :: Parser UntypedExpr
 parseApp = do
-    func <- termNoApp
-    args <- many termNoApp
-    return (foldl EApp func args)
+  f <- term
+  args <- many term
+  return (foldl EApp f args)
 
-parseLetRec :: Parser UntypedExpr
-parseLetRec = do
-    _ <- keyword "let"
-    _ <- keyword "rec"
-    ide1 <- parseIde
-    _ <- symbol ":"
-    t1 <- typ
-    ide2 <- parseIde
-    _ <- symbol ":"
-    t2 <- typ
-    _ <- symbol "="
-    body <- expr
-    _ <- keyword "in"
+parseIsZero :: Parser UntypedExpr
+parseIsZero = do
+    _ <- symbol "iszero"
     e <- expr
-    return (ELetRec ide1 t1 ide2 t2 body e)
+    return (EIsZero e)
 
 
-termNoApp :: Parser UntypedExpr
-termNoApp = parseInt
-         <|> parseBool
-         <|> parseIf
-         <|> parseLet
-         <|> parseLetRec
-         <|> parseFun
-         <|> parseVar
-         <|> parens expr
+-- Operators table for arithmetic
+operatorTable :: [[Operator Parser UntypedExpr]]
+operatorTable =
+  [ [ InfixL (EMul <$ symbol "*"), InfixL (EDiv <$ symbol "/") ]
+  , [ InfixL (EAdd <$ symbol "+"), InfixL (ESub <$ symbol "-") ]
+  ]
 
+-- Main expression parser
+expr :: Parser UntypedExpr
+expr = makeExprParser parseApp operatorTable
+
+-- Top-level runParser
 runParser :: String -> Either String UntypedExpr
 runParser input = case parse (sc *> expr <* eof) "<input>" input of
-    Left msg -> Left (errorBundlePretty msg)
+    Left err -> Left (errorBundlePretty err)
     Right ast -> Right ast

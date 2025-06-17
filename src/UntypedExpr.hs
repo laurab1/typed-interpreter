@@ -7,6 +7,7 @@ data UntypedExpr
   | EVar String
   | EAdd UntypedExpr UntypedExpr
   | EMul UntypedExpr UntypedExpr
+  | ESub UntypedExpr UntypedExpr
   | EDiv UntypedExpr UntypedExpr
   | EIf UntypedExpr UntypedExpr UntypedExpr
   | EIsZero UntypedExpr
