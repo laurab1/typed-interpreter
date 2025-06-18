@@ -49,10 +49,13 @@ eval env uexpr = case uexpr of
         case funVal of
             VFun par body fEnv ->
                 eval ((par, argVal) : fEnv) body
-    ELetRec f _ par _ funBody letBody -> 
-        let recClosure = VFun par funBody recEnv
-            recEnv = (f, recClosure) : env
-        in eval recEnv letBody
+            VFunRec fName par body fEnv ->
+                let closureEnv = (par, argVal) : (fName, funVal) : fEnv
+                in eval closureEnv body
+    ELetRec f _ par _ funBody letBody ->
+        let recClosure = VFunRec f par funBody benv
+            benv = (f, recClosure) : env
+        in eval benv letBody
 
 
 runProgram :: Env Value -> String -> Either String Value

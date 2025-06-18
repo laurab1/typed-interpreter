@@ -52,7 +52,7 @@ testLetRec = TestCase $
     assertEqual "parse and eval factorial (let rec)" 
         (Right (VInt 120)) 
         (runProgram [] 
-            "letrec fact : (int => int) n : int = fun n : int -> if iszero n then 1 else n * fact (n - 1) in fact 5")
+            "letrec fact : (int => int) n : int = if iszero n then 1 else n * fact (n - 1) in fact 5")
 
 allTests :: Test
 allTests = TestList [testInt, testBool, testAdd, testMul, testIf, testLet, testFunApp, testLetRec]
