@@ -103,8 +103,7 @@ parseLetRec = do
     fun <- expr
     _ <- symbol "in"
     body <- expr
-    return (ELetRec fname t arg targ fun body)  -- "_" e TInt dummy
- -- "_" e TInt dummy, oppure ridefini ELetRec
+    return (ELetRec fname t arg targ fun body) 
 
 -- Function definition
 parseFun :: Parser UntypedExpr
@@ -112,7 +111,7 @@ parseFun = do
     _ <- symbol "fun"
     ide <- parseIde
     _ <- symbol ":"
-    t <- typTerm -- 👈 usa typTerm, non typ completo!
+    t <- typTerm
     _ <- symbol "->"
     e <- expr
     return (EFun ide t e)
